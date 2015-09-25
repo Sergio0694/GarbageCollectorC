@@ -10,6 +10,6 @@ include <stdlib.h>
 fprintf(stderr, error);    \
 exit(EXIT_FAILURE);        \
 
-typedef enum { FALSE, TRUE} bool;
+typedef enum { FALSE, TRUE } bool_t;
 
 #endif
