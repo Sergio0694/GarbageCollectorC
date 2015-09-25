@@ -53,7 +53,7 @@ int biggest_previous_prime(int number)
 		if (x[i])
 		{
 			int j, k = 0;
-			for (j = i*i + k*i; j < number; ++j)
+			for (j = i * i; j < number; j += k * i)
 			{
 				x[j] = FALSE;
 				++k;

@@ -4,6 +4,7 @@
 // General libraries
 #include <stdio.h>
 #include <stdlib.h>
+#include "Math/GC_math.h"
 
 // Displays an error message and terminates the process
 #define ERROR_HELPER(error)    \
