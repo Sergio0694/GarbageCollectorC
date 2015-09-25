@@ -1,12 +1,9 @@
-<<<<<<< HEAD
-#include <stdio.h>
 #include "GC_definitions.h"
 
 inline int abs(int value)
-=======
+
 // Returns the absolute value of an integer
 static inline int abs(int value)
->>>>>>> master
 {
 	return value >= 0 ? value : -value;
 }
