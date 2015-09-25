@@ -1,4 +1,4 @@
-#include "GC_math.h"
+#include "GC_definitions.h"
 
 // Returns the absolute value of an integer
 static inline int abs(int value)
@@ -26,13 +26,9 @@ int isqrt(int value)
 	return xknext;
 }
 
-// Checks if the given number is prime
 bool_t is_prime(int number) 
 {
-	// 0 and 1 are not prime numbers
-    if (number <= 1) return FALSE;
-
-	// Iterate through from 0 to the integer root of the number
+    if (number <= 1) return FALSE; // zero and one are not prime
     int i;
     for (i=2; i <= isqrt(number); i++) 
     {
@@ -41,7 +37,6 @@ bool_t is_prime(int number)
     return TRUE;
 }
 
-// Returns the biggest prime number lower or equal than the passed parameter
 int biggest_previous_prime(int number)
 {
 	bool_t x[number];
