@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "../Misc/GC_definitions.h"
-#include "../Misc/GC_mat.h"
+#include "../Misc/GC_math.h"
 #include "hash_map_t.h"
 
 #define TRE_QUARTI (3 / 4.0)
