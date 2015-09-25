@@ -4,7 +4,6 @@
 #define SENTINEL (int*)-1
 
 typedef struct hash_map_s* hash_map_t;
-typedef enum BOOL_E { FALSE, TRUE } bool_t;
 
 hash_map_t hash_map_init();
 

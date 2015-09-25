@@ -7,7 +7,7 @@
 
 /* =========== Global variables ===========*/
 
-bool initialized = FALSE;
+bool_t initialized = FALSE;
 sem_t* mutual_exclusion_semaphore;
 hash_map_t allocation_map;
 
