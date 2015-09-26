@@ -88,7 +88,8 @@ void* find_key(hash_map_t hm, void* k)
 
 bool_t replace_key(hash_map_t hm, int* old_key, int* new_key)
 {
-	// TODO
+	if (!remove_key(hm, old_key)) return FALSE;
+	return insert_key(hm, new_key);
 }
 
 bool_t remove_key(hash_map_t hm, void* k)
@@ -117,6 +118,7 @@ void mark_pointers_as_invalid(hash_map_t hm)
 void mark_as_valid_if_present(hash_map_t hm, void* pointer)
 {
 	int i = find_position(hm, pointer);
+	if (i == -1) return;
 	hm->map[i]->valid = TRUE;
 }
 

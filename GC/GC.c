@@ -9,22 +9,6 @@ void* heap_end;
 void* stack_bottom;
 hash_map_t allocation_map;
 
-/* =========== C program memory structure ===========
-
-╔══ Higher addresses
-║
-╠══ STACK ═════════
-║     |
-║     v
-║     
-║     ^
-║     |
-╠══ HEAP ══════════
-║
-╚══ Lower addresses
-
-========================================== */
-
 void GC_init()
 {
 	if (initialized)
@@ -59,6 +43,22 @@ void* GC_realloc(void* pointer, size_t size)
 	return new_pointer;
 }
 
+/* =========== C program memory structure ===========
+
+╔══ Higher addresses
+║
+╠══ STACK ═════════
+║     |
+║     v
+║
+║     ^
+║     |
+╠══ HEAP ══════════
+║
+╚══ Lower addresses
+
+========================================== */
+
 void GC_collect()
 {
 	char* program_break = (char*)get_heap_pointer();
@@ -70,11 +70,14 @@ void GC_collect()
 	char* address;
 	for (address = heap_end; address <= program_break - pointer_size; address++)
 	{
-		mark_as_valid_if_present((void*)address);
 		// Skip the hashmap
+
+
+		// Heap sweep
+		mark_as_valid_if_present(allocation_map, (void*)address);
 	}
 
-	for (address = stack_bottom; address >= stack_top + pointer_size; address--)
+	for (address = stack_bottom; address >= stack_top - pointer_size; address--)
 	{
 		mark_as_valid_if_present((void*)address);
 	}
