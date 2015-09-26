@@ -1,111 +1,83 @@
-#include "../Misc/GC_definitions.h"
-#include <semaphore.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/select.h>
+﻿#include "../Misc/GC_definitions.h"
 #include "../HashMap/hash_map_t.h"
+#include "MemoryHelper/memory_helper.h"
 
 /* =========== Global variables ===========*/
 
 bool_t initialized = FALSE;
-sem_t* mutual_exclusion_semaphore;
+void* heap_end;
+void* stack_bottom;
 hash_map_t allocation_map;
 
-int* heap_end;
-int* stack_bottom;
+/* =========== C program memory structure ===========
 
-int pipe_fds[2];
+╔══ Higher addresses
+║
+╠══ STACK ═════════
+║     |
+║     v
+║     
+║     ^
+║     |
+╠══ HEAP ══════════
+║
+╚══ Lower addresses
 
-/* =========== Local private functions =========== */
+========================================== */
 
-/* ---------------------------------------------------------------------
-*  get_stack_pointer
-*  ---------------------------------------------------------------------
-*  Description:
-*    Returns the pointer of the current top of the stack */
-static inline int* get_stack_pointer()
+void GC_init()
 {
-	asm("movl %esp, %eax");
-}
-
-static void GC_main()
-{
-	while (1)
+	if (initialized)
 	{
-		// Wait for a socket signal or the timeout
-
-
-		// Signal sweep starting
-		// sem_wait(mutual_exclusion_semaphore);
-
-		// Sweep...
-
-		// Signal sweep ended
-		// sem_post(mutual_exclusion_semaphore);
-	}
-}
-
-/* =========== User functions =========== */
-
-void GC_init(int interval)
-{
-	// Parameter check
-	if (interval >= 0 && interval < 30)
-	{
-		ERROR_HELPER("Invalid interval: must be greater or equal than 30 seconds")
+		ERROR_HELPER("The GarbageCollector can't be initialized twice");
 	}
 
 	// Calculate initial parameters
-	heap_end = sbrk(0);
 	stack_bottom = get_stack_pointer();
-
-	// Create the pipe to communicate between the two threads
-	if (pipe(pipe_fds) == -1)
-	{
-		ERROR_HELPER("Error creating the pipe");
-	}
-
-	// Semaphores initialization
-	if (sem_init(mutual_exclusion_semaphore, 0, 1) == -1)
-	{
-		ERROR_HELPER("Error creating the semaphore");
-	};
+	heap_end = get_heap_pointer();
 
 	// Allocate the hashmap
 	allocation_map = hash_map_init();
-
-	// Thread initialization and call to GC_main
-	pthread_t* gc_main_thread = malloc(sizeof(pthread_t));
-	pthread_create(gc_main_thread, NULL, GC_main, NULL);
 
 	initialized = TRUE;
 }
 
 void* GC_alloc(size_t size)
 {
-	// Wait if there is another operation in process
-	// sem_wait(mutual_exclusion_semaphore);
-
-	// Allocation...
-
-	// End allocation
-	// sem_post(mutual_exclusion_semaphore);
-	return (void*)0;
+	void* pointer = malloc(size);
+	if (!insert_key(allocation_map, pointer))
+	{
+		ERROR_HELPER("Error inserting a new entry into the hashmap");
+	}
+	return pointer;
 }
 
 void* GC_realloc(void* pointer, size_t size)
 {
-	// Wait if there is another operation in process
-	// sem_wait(mutual_exclusion_semaphore);
-
-	// Allocation...
-
-	// End allocation
-	// sem_post(mutual_exclusion_semaphore);
-	return (void*)0;
+	void* new_pointer = realloc(pointer, size);
+	replace_key(allocation_map, pointer, new_pointer);
+	return new_pointer;
 }
 
 void GC_collect()
 {
-	return;
+	char* program_break = (char*)get_heap_pointer();
+	char* stack_top = get_stack_pointer();
+	size_t pointer_size = sizeof(void*);
+
+	mark_pointers_as_invalid(allocation_map);
+
+	char* address;
+	for (address = heap_end; address <= program_break - pointer_size; address++)
+	{
+		mark_as_valid_if_present((void*)address);
+		// Skip the hashmap
+	}
+
+	for (address = stack_bottom; address >= stack_top + pointer_size; address--)
+	{
+		mark_as_valid_if_present((void*)address);
+	}
+
+	deallocate_lost_references(allocation_map);
 }

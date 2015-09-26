@@ -4,27 +4,83 @@
 #include "../Misc/GC_definitions.h"
 #include "hash_map_t.h"
 
+/* =========== Local constants ===========*/
+
 #define TRE_QUARTI (3 / 4.0)
+#define SENTINEL (int*)-1
+#define FIRST_PRIME 257
+
+/* =========== Types used in the file ===========*/
 
 struct hash_map_s
 {
-	int** map;
+	pointer_entry_s* map;
 	int current_max_size;
 	int current_size;
 	int prime_for_hash;
 };
 
-/* =================  PRIVATE FUNCTIONS ================= */
+struct pointer_entry_s
+{
+	void* pointer;
+	bool_t valid;
+};
+
+/* ===========  PRIVATE FUNCTIONS =========== */
 static hash_map_t custom_hash_map_init(size_t size);
 static int hash_function_1(int* k, int N);
 static int hash_function_2(int* k);
 static void rehash(hash_map_t hm);
 static int find_position(hash_map_t hm, int* k);
-/* ====================================================== */
+static pointer_entry_s* create_pointer_entry(int* pointer);
+/* ========================================== */
+
+static pointer_entry_s* create_pointer_entry(int* pointer)
+{
+	pointer_entry_s* pointer_entry = (pointer_entry_s*)malloc(sizeof(pointer_entry_s));
+	pointer_entry->pointer = pointer;
+	pointer_entry->valid = TRUE;
+	return pointer_entry;
+}
+
+void mark_pointers_as_invalid(hash_map_t hm)
+{
+	int i;
+	pointer_entry_s* map = hm->map;
+	for (i = 0; i < hm->current_max_sizel; i++)
+	{
+		if (map[i] != NULL && map[i] != SENTINEL)
+		{
+			map[i]->valid = FALSE;
+		}
+	}
+}
+
+mark_as_valid_if_present(hash_map_t hm, void* pointer)
+{
+	// TODO
+}
+
+void deallocate_lost_references(hash_map_t hm)
+{
+	int i;
+	pointer_entry_s* map = hm->map;
+	for (i = 0; i < hm->current_max_sizel; i++)
+	{
+		if (map[i] != NULL && map[i] != SENTINEL)
+		{
+			if (!map[i]->valid)
+			{
+				free(map[i]);
+				map[i] = SENTINEL;
+			}
+		}
+	}
+}
 
 hash_map_t hash_map_init()
 {
-	return custom_hash_map_init(257);
+	return custom_hash_map_init(FIRST_PRIME);
 }
 
 bool_t insert_key(hash_map_t hm, int* k)
@@ -33,7 +89,7 @@ bool_t insert_key(hash_map_t hm, int* k)
 	int i = hash_function_1(k, hm->prime_for_hash);
 	if (hm->map[i] == NULL || hm->map[i] == SENTINEL)
 	{
-		hm->map[i] = k;
+		hm->map[i] = create_pointer_entry(k);
 		hm->current_size += 1;
 		if ((hm->current_size / (double)max_size) >= TRE_QUARTI) rehash(hm);
 		return TRUE;
@@ -45,7 +101,7 @@ bool_t insert_key(hash_map_t hm, int* k)
 		int p = (i + j * hf2) % hm->prime_for_hash;
 		if (hm->map[p] == NULL || hm->map[p] == SENTINEL)
 		{
-			hm->map[p] = k;
+			hm->map[p] = create_pointer_entry(k);
 			hm->current_size += 1;
 			if ((hm->current_size / (double)max_size) >= TRE_QUARTI) rehash(hm);
 			return TRUE;
@@ -67,6 +123,11 @@ int* find_key(hash_map_t hm, int* k)
 		if (hm->map[i] == k || hm->map[i] == NULL) return hm->map[i];
 	}
 	return NULL;
+}
+
+bool_t replace_key(hash_map_t hm, int* old_key, int* new_key)
+{
+	// TODO
 }
 
 bool_t remove_key(hash_map_t hm, int* k)
