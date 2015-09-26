@@ -44,6 +44,7 @@ bool_t is_prime(int number)
 // Returns the biggest prime number lower or equal than the passed parameter
 int biggest_previous_prime(int number)
 {
+	if (is_prime(number)) return number;
 	bool_t x[number];
 	x[1] = FALSE;
 	int i;
