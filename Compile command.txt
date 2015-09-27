@@ -1,1 +1,0 @@
-gcc -Wall -O2 -o GarbageCollector GC\GC.c GC\MemoryHelper\memory_helper.c HashMap\hash_map_t.c Misc\Math\GC_math.c
