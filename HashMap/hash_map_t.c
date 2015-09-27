@@ -6,13 +6,14 @@
 
 /* =========== Local constants ===========*/
 
-#define CAPACITY_THRESHOLD 75
+#define CAPACITY_THRESHOLD 74
 #define SENTINEL (void*)-1
 #define FIRST_PRIME 257
 #define VALID_THRESHOLD 1
 
 /* =========== Types used in the file ===========*/
 
+// Struct that holds the allocated memory block address, its size and a flag
 struct pointer_entry_s
 {
 	void* pointer;
@@ -20,8 +21,19 @@ struct pointer_entry_s
 	bool_t valid;
 };
 
+// The type used in the hash map functions
 typedef pointer_entry_s* pointer_entry_t;
 
+/* ---------------------------------------------------------------------
+*  hash_map_s
+*  ---------------------------------------------------------------------
+*  Description:
+*    The struct that contains all the info for a given hash map instance
+*  Fields:
+*    map ---> The hash map of pointer_entry_t, holds all the used references 
+*    current_max_size ---> The size of the hash map
+*    current_size ---> The actual number of items in the hash map
+*    prime_for_hash ---> Prime number used to perform the hashing operations */
 struct hash_map_s
 {
 	pointer_entry_t* map;
