@@ -6,7 +6,7 @@
 
 /* =========== Local constants ===========*/
 
-#define TRE_QUARTI (3 / 4.0)
+#define CAPACITY_THRESHOLD 75
 #define SENTINEL (void*)-1
 #define FIRST_PRIME 257
 #define VALID_THRESHOLD 1
@@ -53,7 +53,7 @@ bool_t insert_key(hash_map_t hm, void* k, size_t size)
 		free(hm->map[i]);
 		hm->map[i] = create_pointer_entry(k);
 		hm->current_size += 1;
-		if ((hm->current_size / (double)max_size) >= TRE_QUARTI) rehash(hm);
+		if (100 * hm->current_size / max_size) >= CAPACITY_THRESHOLD) rehash(hm);
 		return TRUE;
 	}
 	int j;
@@ -66,7 +66,7 @@ bool_t insert_key(hash_map_t hm, void* k, size_t size)
 			free(hm->map[p]);
 			hm->map[p] = create_pointer_entry(k);
 			hm->current_size += 1;
-			if ((hm->current_size / (double)max_size) >= TRE_QUARTI) rehash(hm);
+			if (100 * hm->current_size / max_size) >= CAPACITY_THRESHOLD) rehash(hm);
 			return TRUE;
 		}
 	}

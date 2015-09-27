@@ -2,7 +2,7 @@
 #include "../HashMap/hash_map_t.h"
 #include "MemoryHelper/memory_helper.h"
 
-/* =========== Global variables ===========*/
+/* =========== Global variables =========== */
 
 bool_t initialized = FALSE;
 void* stack_bottom;
