@@ -11,6 +11,7 @@
 fprintf(stderr, "%s", error);  \
 exit(EXIT_FAILURE);            \
 
+// An unnamed enum used to replicate the C++ bool type
 typedef enum { FALSE, TRUE } bool_t;
 
 #endif
