@@ -1,5 +1,9 @@
 #include "GC_math.h"
 
+/* ============================================================================
+*  Integer square root
+*  ========================================================================= */
+
 // Returns the absolute value of an integer
 static inline int abs(int value)
 {
@@ -25,6 +29,10 @@ int isqrt(int value)
 	}
 	return xknext;
 }
+
+/* ============================================================================
+*  Prime numbers
+*  ========================================================================= */
 
 // Checks if the given number is prime
 bool_t is_prime(int number) 
@@ -68,4 +76,36 @@ int biggest_previous_prime(int number)
 		if (x[i]) previous = i;
 	}
 	return previous;
+}
+
+/* ============================================================================
+*  Horner hash function
+*  ========================================================================= */
+
+// Returns the base 10 logarithm of a given integer number
+static int base10_log(int value)
+{
+	if (value < 0) ERROR_HELPER("The log function can't accept a negative argument");
+	if (value == 0) ERROR_HELPER("The log of 0 doesn't exist");
+	int log = 0;
+	while (value)
+	{
+		log++;
+		value /= 10;
+	}
+	return log;
+}
+
+// Extract the digits of a number and returns an array with all of them from left to right
+int* extract_digits_array(int number, int* size)
+{
+	number = abs(number);
+	int digits = base10_log(number) + 1, i = digits - 1;
+	int* digits_array = (int*)malloc(sizeof(int) * digits);
+	while (number > 0)
+	{
+		digits_array[i] = number % 10;
+		number /= 10;
+	}
+	return digits_array;
 }

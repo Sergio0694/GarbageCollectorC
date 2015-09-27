@@ -32,4 +32,14 @@ bool_t is_prime(int number);
 *    value ---> The maximum value of the prime number to return */
 int biggest_previous_prime(int number);
 
+/* ---------------------------------------------------------------------
+*  extract_digits_array
+*  ---------------------------------------------------------------------
+*  Description:
+*    Extract the digits of a number and returns an array with all 
+*    of them from left to right
+*  Parameters:
+*    number ---> The number to split into single digits */
+int* extract_digits_array(int number, int* size);
+
 #endif

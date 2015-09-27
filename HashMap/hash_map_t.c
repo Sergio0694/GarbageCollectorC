@@ -9,12 +9,14 @@
 #define TRE_QUARTI (3 / 4.0)
 #define SENTINEL (void*)-1
 #define FIRST_PRIME 257
+#define VALID_THRESHOLD 1
 
 /* =========== Types used in the file ===========*/
 
 struct pointer_entry_s
 {
 	void* pointer;
+	size_t size;
 	bool_t valid;
 };
 
@@ -42,7 +44,7 @@ hash_map_t hash_map_init()
 	return custom_hash_map_init(FIRST_PRIME);
 }
 
-bool_t insert_key(hash_map_t hm, void* k)
+bool_t insert_key(hash_map_t hm, void* k, size_t size)
 {
 	int max_size = hm->current_max_size;
 	int i = hash_function_1((int*)k, hm->prime_for_hash);
@@ -71,19 +73,23 @@ bool_t insert_key(hash_map_t hm, void* k)
 	return FALSE;
 }
 
-void* find_key(hash_map_t hm, void* k)
+size_t find_key(hash_map_t hm, void* k)
 {
 	int max_size = hm->current_max_size;
 	int i = hash_function_1((int*)k, hm->prime_for_hash);
-	if (hm->map[i]->pointer == k || hm->map[i]->pointer == NULL)) return hm->map[i]->pointer; 
+	void* temp = hm->map[i]->pointer;
+	if (temp == k) return hm->map[i]->size;
+	else if (temp == NULL) return 0;
 	int j;
 	int hf2 = hash_function_2((int*)k);
 	for (j = 0; j < max_size; ++j)
 	{
 		int p = (i + j * hf2) % hm->prime_for_hash;
-		if (hm->map[p]->pointer == k || hm->map[p]->pointer == NULL) return hm->map[p]->pointer;
+		temp = hm->map[p]->pointer;
+		if (temp == k) return hm->map[p]->size;
+		else if (temp == NULL) return 0;
 	}
-	return NULL;
+	return 0;
 }
 
 bool_t replace_key(hash_map_t hm, int* old_key, int* new_key)
@@ -113,6 +119,13 @@ void mark_pointers_as_invalid(hash_map_t hm)
 			map[i]->valid = FALSE;
 		}
 	}
+}
+
+bool_t check_if_marked(hash_map_t hm, void* pointer)
+{
+	int i = find_position(hm, pointer);
+	if (i == -1) ERROR_HELPER("The given pointer doesn't exist in the hash map");
+	return hm->map[i]->valid;
 }
 
 void mark_as_valid_if_present(hash_map_t hm, void* pointer)
@@ -171,18 +184,31 @@ static hash_map_t custom_hash_map_init(size_t size)
 	return to_return;
 }
 
-static pointer_entry_t create_pointer_entry(void* pointer)
+static pointer_entry_t create_pointer_entry(void* pointer, size_t size)
 {
 	pointer_entry_t pointer_entry = (pointer_entry_t)malloc(sizeof(struct pointer_entry_s));
 	pointer_entry->pointer = pointer;
-	pointer_entry->valid = TRUE;
+	pointer_entry->size = size;
 	return pointer_entry;
 }
 
+/* ============================================================================
+*  Hash functions
+*  ========================================================================= */
+
+// Main hash function with Horner's method
 static int hash_function_1(int* k, int N)
 {
-	int a = 33, b = 39;
-	return (a * (int)k + b) % N;
+	const int a = 33;
+	int len;
+	int* digits = extract_digits_array((int)k, &len);
+	int sum = digits[len - 1], i;
+	for (i = len - 2; >= 0; i--)
+	{
+		sum *= a;
+		sum += digits[i];
+	}
+	return abs(sum % N);
 }
 
 static int hash_function_2(int* k)

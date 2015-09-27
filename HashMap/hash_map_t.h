@@ -6,7 +6,7 @@ typedef struct hash_map_s* hash_map_t;
 hash_map_t hash_map_init();
 
 bool_t insert_key(hash_map_t hm, void* key);
-void* find_key(hash_map_t hm, void* key);
+bool_t find_key(hash_map_t hm, void* key);
 bool_t remove_key(hash_map_t hm, void* key);
 void mark_pointers_as_invalid(hash_map_t hm);
 void deallocate_lost_references(hash_map_t hm);

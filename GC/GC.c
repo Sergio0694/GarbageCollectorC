@@ -5,7 +5,7 @@
 /* =========== Global variables ===========*/
 
 bool_t initialized = FALSE;
-void* heap_end;
+//void* heap_end;
 void* stack_bottom;
 hash_map_t allocation_map;
 
@@ -18,7 +18,7 @@ void GC_init()
 
 	// Calculate initial parameters
 	stack_bottom = get_stack_pointer();
-	heap_end = get_heap_pointer();
+	//heap_end = get_heap_pointer();
 
 	// Allocate the hashmap
 	allocation_map = hash_map_init();
@@ -59,27 +59,40 @@ void* GC_realloc(void* pointer, size_t size)
 
 ========================================== */
 
+void recursive_graph_mark(void* pointer, size_t allocated_space)
+{
+	void* upper_bound = pointer + allocated_space - sizeof(void*);
+	while (pointer < upper_bound)
+	{
+		size_t allocated_size = find_key(allocation_map, address);
+		if ((allocated_size != 0) && !check_if_marked(allocation_map, pointer))
+		{
+			mark_as_valid_if_present(allocation_map, pointer);
+			recursive_graph_mark(pointer, allocated_size);
+		}
+		pointer++;
+	}
+}
+
 void GC_collect()
 {
-	char* program_break = (char*)get_heap_pointer();
-	char* stack_top = get_stack_pointer();
-	size_t pointer_size = sizeof(void*);
-
+	// Set all the pointers in the allocation map as invalid
 	mark_pointers_as_invalid(allocation_map);
+	
+	// Stack sweep and mark
 
-	char* address;
-	for (address = heap_end; address <= program_break - pointer_size; address++)
+	void* address = get_stack_pointer();
+
+	// 4 on 32 bit systems, 8 on 64 bit systems
+	void* upper_bound = stack_bottom - sizeof(void*);
+
+	while (address < upper_bound)
 	{
-		// Skip the hashmap
-
-
-		// Heap sweep
-		mark_as_valid_if_present(allocation_map, (void*)address);
-	}
-
-	for (address = stack_bottom; address >= stack_top - pointer_size; address--)
-	{
-		mark_as_valid_if_present((void*)address);
+		if ((size_t allocated_size = find_key(allocation_map, address)) != 0)
+		{
+			recursive_graph_mark(address, allocated_size);
+		}
+		address++;
 	}
 
 	deallocate_lost_references(allocation_map);
