@@ -36,4 +36,11 @@ void* GC_realloc(void* pointer, size_t size);
 *    can no longer be reached by user code and deallocates them */
 void GC_collect();
 
+/* ---------------------------------------------------------------------
+*  GC_free
+*  ---------------------------------------------------------------------
+*  Description:
+*    Manually frees a block of allocated memory */
+void GC_free(void* pointer);
+
 #endif

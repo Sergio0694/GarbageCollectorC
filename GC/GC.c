@@ -56,6 +56,13 @@ void* GC_realloc(void* pointer, size_t size)
 	return new_pointer;
 }
 
+// Wraps the free function
+void GC_free(void* pointer)
+{
+	remove_key(allocation_map, pointer);
+}
+
+
 /* ============================================================================
 *  Single thread collect section
 *  ============================================================================
