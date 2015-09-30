@@ -211,7 +211,7 @@ void GC_collect()
 	void* address = get_stack_pointer();
 
 #if defined POSIX_THREADS
-	sem_wait(mutual_exclusion_semaphore);
+	GET_LOCK
 
 	// Thread initialization and call to GC_main
 	pthread_t* gc_main_thread = malloc(sizeof(pthread_t));
@@ -220,7 +220,7 @@ void GC_collect()
 		ERROR_HELPER("Error creating the thread");
 	}
 #elif defined WIN_THREADS
-	try_get_mutex(shared_muted);
+	GET_LOCK
 
 	HANDLE gc_main_thread = CreateThread(NULL, 0, collect, address, 0, NULL);
 	if (gc_main_thread == NULL)
