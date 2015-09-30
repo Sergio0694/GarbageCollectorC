@@ -6,8 +6,8 @@
 
 // On Unix-like OSes, switch to a multithread GC
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
-#include <semaphore.h>
 #include <pthread.h>
+#include<unistd.h>
 #define POSIX_THREADS
 #elif defined _WIN32
 #include <windows.h>
@@ -23,14 +23,20 @@ hash_map_t allocation_map;
 
 // OS-specific global variables
 #if defined POSIX_THREADS
-sem_t* mutual_exclusion_semaphore;
+
+// UNIX global mutex and macros
+pthread_mutex_t shared_lock;
+#define GET_LOCK pthread_mutex_lock(&shared_lock);
+#define RELEASE_LOCK pthread_muted_unlock(&shared_lock);
 #elif defined WIN_THREADS
-HANDLE shared_mutex;
+
+// WIN32 global mutex and helper functions
+HANDLE shared_lock;
 
 // Tries to access the critical section on Windows
 static inline void try_get_mutex(HANDLE mutex)
 {
-	DWORD result = WaitForSingleObject(shared_mutex, INFINITE);
+	DWORD result = WaitForSingleObject(shared_lock, INFINITE);
 	if (result != WAIT_OBJECT_0)
 	{
 		ERROR_HELPER("Error getting the mutex");
@@ -45,6 +51,10 @@ static inline void try_release_mutex(HANDLE mutex)
 		ERROR_HELPER("Error releasing the mutex");
 	}
 }
+
+// WIN32 macros
+#define GET_LOCK try_get_mutex(shared_lock);
+#define RELEASE_LOCK try_release_mutex(shared_lock);
 #endif
 
 /* ============================================================================
@@ -66,15 +76,15 @@ void GC_init()
 	// Allocate the hashmap to hold the references to the allocated memory
 	allocation_map = hash_map_init();
 
-	// Semaphores initialization
+	// Mutex initialization
 #if defined POSIX_THREADS
-	if (sem_init(mutual_exclusion_semaphore, 0, 1) == -1)
+	if (pthread_mutex_init(&shared_lock, NULL) != 0)
 #elif defined WIN_THREADS
 	if (CreateMutex(NULL, FALSE, NULL) == NULL)
 #endif
 #if defined POSIX_THREADS || defined WIN_THREADS
 	{
-		ERROR_HELPER("Error creating the semaphore");
+		ERROR_HELPER("Error creating the mutex");
 	};
 #endif
 
@@ -85,11 +95,7 @@ void GC_init()
 // Wraps the malloc function
 void* GC_alloc(size_t size)
 {
-#if defined POSIX_THREADS
-	sem_wait(mutual_exclusion_semaphore);
-#elif defined WIN_THREADS
-	try_get_mutex(shared_muted);
-#endif
+	GET_LOCK
 
 	// Calls the standard malloc function to allocate memory
 	void* pointer = malloc(size);
@@ -100,22 +106,14 @@ void* GC_alloc(size_t size)
 		ERROR_HELPER("Error inserting a new entry into the hashmap");
 	}
 
-#if defined POSIX_THREADS
-	sem_post(mutual_exclusion_semaphore);
-#else
-	try_release_mutex(shared_muted);
-#endif
+	RELEASE_LOCK
 	return pointer;
 }
 
 // Wraps the realloc function
 void* GC_realloc(void* pointer, size_t size)
 {
-#if defined POSIX_THREADS
-	sem_wait(mutual_exclusion_semaphore);
-#elif defined WIN_THREADS
-	try_get_mutex(shared_muted);
-#endif
+	GET_LOCK
 
 	// Calls the standard realloc function
 	void* new_pointer = realloc(pointer, size);
@@ -123,28 +121,16 @@ void* GC_realloc(void* pointer, size_t size)
 	// Updates the reference in the hash map
 	replace_key(allocation_map, pointer, new_pointer);
 
-#if defined POSIX_THREADS
-	sem_post(mutual_exclusion_semaphore);
-#else
-	try_release_mutex(shared_muted);
-#endif
+	RELEASE_LOCK
 	return new_pointer;
 }
 
 // Wraps the free function
 void GC_free(void* pointer)
 {
-#if defined POSIX_THREADS
-	sem_wait(mutual_exclusion_semaphore);
-#elif defined WIN_THREADS
-	try_get_mutex(shared_muted);
-#endif
+	GET_LOCK
 	remove_key(allocation_map, pointer);
-#if defined POSIX_THREADS
-	sem_post(mutual_exclusion_semaphore);
-#else
-	try_release_mutex(shared_muted);
-#endif
+	RELEASE_LOCK
 }
 
 /* ============================================================================
@@ -202,11 +188,11 @@ static void collect(void* address)
 	// Sweep the stack
 	while (address < upper_bound)
 	{
-		// Check if the current location is a pointer to an dynamically allocated memory block
+		// Check if the current location is a pointer to an dynamically allocated memory bshared_lock
 		size_t allocated_size = find_key(allocation_map, address)
 			if (allocated_size != 0)
 			{
-				// Use that block as the root and mark all the memory graph as reachable
+				// Use that bshared_lock as the root and mark all the memory graph as reachable
 				recursive_graph_mark(address, allocated_size);
 			}
 		address++;
@@ -215,14 +201,10 @@ static void collect(void* address)
 	// Deallocate all the references that are definitively lost
 	deallocate_lost_references(allocation_map);
 
-#if defined POSIX_THREADS
-	sem_post(mutual_exclusion_semaphore);
-#else
-	try_release_mutex(shared_muted);
-#endif
+	RELEASE_LOCK
 }
 
-// Automatically deallocates all the memory blocks that can no longer be reached
+// Automatically deallocates all the memory bshared_locks that can no longer be reached
 void GC_collect()
 {
 	// Get the pointer to the top of the stack
