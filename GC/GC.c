@@ -53,8 +53,8 @@ static inline void try_release_mutex(HANDLE mutex)
 }
 
 // WIN32 macros
-#define GET_LOCK try_get_mutex(shared_lock);
-#define RELEASE_LOCK try_release_mutex(shared_lock);
+#define GET_LOCK try_get_mutex(shared_lock)
+#define RELEASE_LOCK try_release_mutex(shared_lock)
 #endif
 
 /* ============================================================================
@@ -95,7 +95,7 @@ void GC_init()
 // Wraps the malloc function
 void* GC_alloc(size_t size)
 {
-	GET_LOCK
+	GET_LOCK;
 
 	// Calls the standard malloc function to allocate memory
 	void* pointer = malloc(size);
@@ -106,14 +106,32 @@ void* GC_alloc(size_t size)
 		ERROR_HELPER("Error inserting a new entry into the hashmap");
 	}
 
-	RELEASE_LOCK
+	RELEASE_LOCK;
+	return pointer;
+}
+
+// Wraps the calloc function
+void* GC_calloc(size_t nitems, size_t size)
+{
+	GET_LOCK;
+
+	// Calls the standard calloc function to allocate memory
+	void* pointer = calloc(nitems, size);
+
+	// Stores the reference and the amount of allocated memory
+	if (!insert_key(allocation_map, pointer, nitems * size))
+	{
+		ERROR_HELPER("Error inserting a new entry into the hashmap");
+	}
+
+	RELEASE_LOCK;
 	return pointer;
 }
 
 // Wraps the realloc function
 void* GC_realloc(void* pointer, size_t size)
 {
-	GET_LOCK
+	GET_LOCK;
 
 	// Calls the standard realloc function
 	void* new_pointer = realloc(pointer, size);
@@ -121,16 +139,16 @@ void* GC_realloc(void* pointer, size_t size)
 	// Updates the reference in the hash map
 	replace_key(allocation_map, pointer, new_pointer);
 
-	RELEASE_LOCK
+	RELEASE_LOCK;
 	return new_pointer;
 }
 
 // Wraps the free function
 void GC_free(void* pointer)
 {
-	GET_LOCK
+	GET_LOCK;
 	remove_key(allocation_map, pointer);
-	RELEASE_LOCK
+	RELEASE_LOCK;
 }
 
 /* ============================================================================
@@ -201,7 +219,7 @@ static void collect(void* address)
 	// Deallocate all the references that are definitively lost
 	deallocate_lost_references(allocation_map);
 
-	RELEASE_LOCK
+	RELEASE_LOCK;
 }
 
 // Automatically deallocates all the memory bshared_locks that can no longer be reached
@@ -211,7 +229,7 @@ void GC_collect()
 	void* address = get_stack_pointer();
 
 #if defined POSIX_THREADS
-	GET_LOCK
+	GET_LOCK;
 
 	// Thread initialization and call to GC_main
 	pthread_t* gc_main_thread = malloc(sizeof(pthread_t));
@@ -220,7 +238,7 @@ void GC_collect()
 		ERROR_HELPER("Error creating the thread");
 	}
 #elif defined WIN_THREADS
-	GET_LOCK
+	GET_LOCK;
 
 	HANDLE gc_main_thread = CreateThread(NULL, 0, collect, address, 0, NULL);
 	if (gc_main_thread == NULL)

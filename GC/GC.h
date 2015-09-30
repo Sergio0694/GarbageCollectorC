@@ -23,6 +23,18 @@ void GC_init();
 void* GC_alloc(size_t size);
 
 /* ---------------------------------------------------------------------
+*  GC_calloc
+*  ---------------------------------------------------------------------
+*  Description:
+*    Wraps the calloc function: allocates a block of memory in the heap,
+*    sets all the allocated bytes to 0 and returns a pointer to 
+*    the first allocated memory location
+*  Parameters:
+*    nitems ---> The number of items to request allocated space for
+*    size ---> The size of each item */
+void* GC_calloc(size_t nitems, size_t size);
+
+/* ---------------------------------------------------------------------
 *  GC_realloc
 *  ---------------------------------------------------------------------
 *  Description:
