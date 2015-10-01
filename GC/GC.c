@@ -222,9 +222,35 @@ static void collect(void* address)
 	RELEASE_LOCK;
 }
 
+
+
+static void populate_register_array(void* target[])
+{
+#if defined(__x86_64__) || defined(_M_X64)
+#define REG_NUMBER 16
+	char* registers[] = { "rax", "rbx", "rcx", "rdx", "rdi", "rsi", 
+						"r8x", "r9x", "r10x", "r11x", "r12x", "r13x", "r14x", "r15x" };
+	int i;
+	for (i = 0; i < REG_NUMBER; i++)
+	{
+		char* command[]
+		target[i] = 
+	}
+#else
+	char* registers[] = { "eax", "ebx", "ecx", "edx", "edi", "esi" };
+	void* registers[8];
+#endif
+}
+
 // Automatically deallocates all the memory bshared_locks that can no longer be reached
 void GC_collect()
 {
+#if defined(__x86_64__) || defined(_M_X64)
+	void* registers[16];
+#else
+	void* registers[8];
+#endif
+
 	// Get the pointer to the top of the stack
 	void* address = get_stack_pointer();
 
