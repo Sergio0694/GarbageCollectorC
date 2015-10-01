@@ -222,34 +222,47 @@ static void collect(void* address)
 	RELEASE_LOCK;
 }
 
-
-
-static void populate_register_array(void* target[])
+// Backups the content of the general purpose registers into a target array
+static void populate_registers_array(void* target[])
 {
+// The buffer will contain "movl/q %0xADDRESS, %xxx"
+#define COMMAND_BUFFER_LENGTH = 64
+
+// Enumerate the fourteen 64 bit registers
 #if defined(__x86_64__) || defined(_M_X64)
 #define REG_NUMBER 16
+#define MOV_COMMAND "movq"
 	char* registers[] = { "rax", "rbx", "rcx", "rdx", "rdi", "rsi", 
-						"r8x", "r9x", "r10x", "r11x", "r12x", "r13x", "r14x", "r15x" };
-	int i;
-	for (i = 0; i < REG_NUMBER; i++)
-	{
-		char* command[]
-		target[i] = 
-	}
+						"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" };
 #else
+
+// 32 bit systems only have 6 general purpose registers
+#define REG_NUMBER 8
+#define MOV_COMMAND "movl"
 	char* registers[] = { "eax", "ebx", "ecx", "edx", "edi", "esi" };
 	void* registers[8];
 #endif
+
+	// Run the asm commands to copy the registers content into the array
+	int i;
+	for (i = 0; i < REG_NUMBER; i++)
+	{
+		char command[COMMAND_BUFFER_LENGTH];
+		sprintf(command, "%s \%%p, %s\0", MOV_COMMAND, target + i, registers[i]);
+		asm(command);
+	}
 }
 
 // Automatically deallocates all the memory bshared_locks that can no longer be reached
 void GC_collect()
 {
+	// Backup the content of the general purpose registers into the stack
 #if defined(__x86_64__) || defined(_M_X64)
-	void* registers[16];
+	void* registers_backup[16];
 #else
-	void* registers[8];
+	void* registers_backup[8];
 #endif
+	populate_registers_array(registers_backup);
 
 	// Get the pointer to the top of the stack
 	void* address = get_stack_pointer();
