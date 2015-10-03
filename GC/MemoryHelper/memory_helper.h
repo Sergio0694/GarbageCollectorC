@@ -6,13 +6,11 @@
 *  ---------------------------------------------------------------------
 *  Description:
 *    Returns the pointer of the current top of the stack */
-inline void* get_stack_pointer();
+void* get_stack_pointer();
 
-/* ---------------------------------------------------------------------
-*  get_heap_pointer
-*  ---------------------------------------------------------------------
-*  Description:
-*    Returns the pointer to the top of the heap */
-inline void* get_heap_pointer();
+void* get_start_data_pointer();
+
+
+void* get_bss_end_pointer();
 
 #endif

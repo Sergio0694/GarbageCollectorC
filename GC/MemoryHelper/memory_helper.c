@@ -5,14 +5,22 @@ inline void* get_stack_pointer()
 {
 	// Checks the current CPU architecture
 #if defined(__x86_64__) || defined(_M_X64)
-	asm("movl %rsp, %rax");
+	asm("movq %rsp, %rax");
 #else
 	asm("movl %esp, %eax");
 #endif
 }
 
-// Returns the program break pointer
-inline void* get_heap_pointer()
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
+extern char edata;
+
+void* get_start_data_pointer()
 {
-	return sbrk(0);
+	return &edata;
+}
+
+
+void* get_bss_end_pointer()
+{
+	//return sbrk(0);
 }
