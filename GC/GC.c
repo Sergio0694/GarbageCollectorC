@@ -248,7 +248,7 @@ static void populate_registers_array(void* target[])
 	for (i = 0; i < REG_NUMBER; i++)
 	{
 		char command[COMMAND_BUFFER_LENGTH];
-		sprintf(command, "%s \%%p, %s\0", MOV_COMMAND, target + i, registers[i]);
+		sprintf(command, "%s %s, \%%p", MOV_COMMAND, registers[i], target + i);
 		asm(command);
 	}
 }
